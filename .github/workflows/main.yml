@@ -10,6 +10,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y openjdk-8-jdk build-essential git unzip
+        
+    - name: Install buildozer
+      run: |
+        pip install buildozer==1.4.0 cython==0.29.33
+        
     - name: Create buildozer.spec
       run: |
         cat > buildozer.spec << 'EOF'
@@ -17,10 +31,8 @@ jobs:
         title = LIS Prediction
         package.name = lisprediction
         package.domain = org.example
-        
         source.dir = .
         source.include_exts = py,png,jpg,kv,atlas
-        
         version = 0.1
         requirements = python3,kivy
         
@@ -29,18 +41,20 @@ jobs:
         
         [app:android]
         android.permissions = INTERNET
-        android.api = 33
+        android.api = 30
         android.minapi = 21
-        android.ndk = 25b
-        android.sdk = 33
+        android.ndk = 23b
+        android.sdk = 30
         android.accept_sdk_license = True
+        android.gradle_dependencies = 
+        android.add_compile_options = 
         EOF
         
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        command: buildozer android debug
-        buildozer_version: master
+    - name: Build APK
+      run: |
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        export PATH=$PATH:$JAVA_HOME/bin
+        yes | buildozer android debug
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
